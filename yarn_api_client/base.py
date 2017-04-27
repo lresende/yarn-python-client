@@ -15,6 +15,8 @@ except ImportError:
 
 from .errors import APIError, ConfigurationError
 
+import sys
+pyversion = sys.version_info[0]
 
 class Response(object):
     def __init__(self, http_response):
@@ -37,7 +39,12 @@ class BaseYarnAPI(object):
         if(self.username and self.password):
             #we need to base 64 encode it
             #and then decode it to acsii as python 3 stores it as a byte string
-            credentials = bytes('%s:%s' % (self.username, self.password), 'utf-8')
+            cred = '%s:%s' % (self.username, self.password)
+            # if python 2.x bytes has no 'utf-8' flag
+            if pyversion == 3:
+                credentials = bytes(cred, 'utf-8')
+            else:
+                credentials = bytes(cred)
             print(credentials)
             userAndPass = b64encode(credentials).decode('ascii')
             print(userAndPass)
