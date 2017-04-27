@@ -221,3 +221,8 @@ class ResourceManager(BaseYarnAPI):
         path = self.api_endpoint + '/cluster/nodes/{nodeid}'.format(nodeid=node_id)
 
         return self.request(path)
+
+    def cluster_new_application(self):
+        path = self.api_endpoint + "/cluster/apps/apps/new-application"
+        headers={"Content-Type": "application/json"}
+        return self.request(path, action='POST', headers=headers)

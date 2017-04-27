@@ -26,7 +26,7 @@ class Response(object):
 class BaseYarnAPI(object):
     response_class = Response
 
-    def request(self, api_path, **query_args):
+    def request(self, api_path, action='GET', headers=None, **query_args):
         params = urlencode(query_args)
         if params:
             path = api_path + '?' + params
@@ -35,7 +35,6 @@ class BaseYarnAPI(object):
 
         self.logger.info('Request https://%s:%s%s', self.address, self.port, path)
 
-        headers = None
         if(self.username and self.password):
             #we need to base 64 encode it
             #and then decode it to acsii as python 3 stores it as a byte string
@@ -49,13 +48,17 @@ class BaseYarnAPI(object):
             userAndPass = b64encode(credentials).decode('ascii')
             print(userAndPass)
             print(b64decode(userAndPass))
-            headers = { 'Authorization' : 'Basic %s' %  userAndPass }
+            # update header if provided
+            auth = { 'Authorization' : 'Basic %s' %  userAndPass }
+            if headers: 
+                headers.update(auth)
+            else: 
+                headers = auth
             print(headers)
-
 
         print(path)
         http_conn = self.http_conn
-        http_conn.request('GET', path, headers=headers)
+        http_conn.request(action, path, headers=headers)
         response = http_conn.getresponse()
 
         if response.status == OK:
