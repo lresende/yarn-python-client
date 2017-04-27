@@ -223,6 +223,11 @@ class ResourceManager(BaseYarnAPI):
         return self.request(path)
 
     def cluster_new_application(self):
-        path = self.api_endpoint + "/cluster/apps/apps/new-application"
+        path = self.api_endpoint + "/cluster/apps/new-application"
         headers={"Content-Type": "application/json"}
-        return self.request(path, action='POST', headers=headers)
+        return self.request(api_path=path, action='POST', headers=headers)
+
+    def submit_new_app(self, json_parameter):
+        path = self.api_endpoint + "/cluster/apps"
+        headers={"Content-Type": "application/json"}
+        return self.request(api_path=path, action='POST', body=json_parameter, headers=headers)
