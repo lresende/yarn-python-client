@@ -223,6 +223,25 @@ class ResourceManager(BaseYarnAPI):
         return self.request(path)
 
     def cluster_new_application(self):
-        path = self.api_endpoint + "/cluster/apps/apps/new-application"
+        """
+        Get a new app info, i.e application-id, maximum-resource-capability (memory, vCores).
+
+        :returns: API response object with JSON data
+        :rtype: :py:class:`yarn_api_client.base.Response`
+        """
+        path = self.api_endpoint + "/cluster/apps/new-application"
         headers={"Content-Type": "application/json"}
-        return self.request(path, action='POST', headers=headers)
+        return self.request(api_path=path, action='POST', headers=headers)
+
+    def submit_new_app(self, json_parameter):
+        """
+        Submit a new app with json data as parameter.
+
+        :param str application-id: The id of the new application to be submitted.
+        :param dict json_parameter: the JSON object with parameters for the application.
+        :returns: API response object, without JSON data as no value returned.
+        :rtype: :py:class:`yarn_api_client.base.Response`
+        """
+        path = self.api_endpoint + "/cluster/apps"
+        headers={"Content-Type": "application/json"}
+        return self.request(api_path=path, action='POST', body=json_parameter, headers=headers)

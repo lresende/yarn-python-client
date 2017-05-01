@@ -1,9 +1,9 @@
 # -*- coding: utf-8 -*-
 from __future__ import unicode_literals
 try:
-    from httplib import HTTPConnection, HTTPSConnection, OK
+    from httplib import HTTPConnection, HTTPSConnection, OK, ACCEPTED
 except ImportError:
-    from http.client import HTTPConnection, HTTPSConnection, OK
+    from http.client import HTTPConnection, HTTPSConnection, OK, ACCEPTED
 import ssl
 from base64 import b64encode, b64decode
 import json
@@ -20,13 +20,17 @@ pyversion = sys.version_info[0]
 
 class Response(object):
     def __init__(self, http_response):
-        self.data = json.load(http_response)
+        try:
+            self.data = json.load(http_response)
+        # If response contains no text, return the raw object
+        except ValueError:
+            self.data = http_response
 
 
 class BaseYarnAPI(object):
     response_class = Response
 
-    def request(self, api_path, action='GET', headers=None, **query_args):
+    def request(self, api_path, action='GET', headers=None, body="", **query_args):
         params = urlencode(query_args)
         if params:
             path = api_path + '?' + params
@@ -58,10 +62,11 @@ class BaseYarnAPI(object):
 
         print(path)
         http_conn = self.http_conn
-        http_conn.request(action, path, headers=headers)
+        http_conn.request(method=action, url=path, body=body, headers=headers)
         response = http_conn.getresponse()
 
-        if response.status == OK:
+        # ACCEPTED = 202: If the request has been accepted for processing
+        if response.status == OK or response.status == ACCEPTED:
             return self.response_class(response)
         else:
             msg = 'Response finished with status: %s' % response.status
