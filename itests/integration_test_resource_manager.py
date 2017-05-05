@@ -55,3 +55,16 @@ class ResourceManagerTestCase(TestCase):
         running_nodes = self.resourceManager.cluster_nodes(state='NEW')
         pprint(running_nodes.data)
         self.assertIsNone(nodes.data['nodes'])
+
+    def test_query_am_host(self):
+        resourcemanagerHTTP = ResourceManager(serviceEndpoint='http://9.30.56.58:8088/ws/v1/cluster')
+        data = resourcemanagerHTTP.cluster_applications(user='hive').data
+        
+        self.assertIsNotNone(data['apps'])
+
+        for app in data['apps']['app']:
+            if app['name'] == 'Thrift JDBC/ODBC Server':
+                pprint(app['amHostHttpAddress'])
+                pprint(app['id'])
+                self.assertIsNotNone(app['amHostHttpAddress'])
+                self.assertIsNotNone(app['id'])
