@@ -39,13 +39,13 @@ class BaseYarnAPITestCase(TestCase):
             
     def test_http_configuration(self):
         client = self.get_client()
-        client.address = None
+        client.hostname = None
         client.port = 80
 
         with self.assertRaises(ConfigurationError):
             conn = client.http_conn
 
-        client.address = 'localhost'
+        client.hostname = 'localhost'
         client.port = None
 
         with self.assertRaises(ConfigurationError):
@@ -53,7 +53,9 @@ class BaseYarnAPITestCase(TestCase):
 
     def get_client(self):
         client = base.BaseYarnAPI()
-        client.address = 'example.com'
-        client.port = 80
+        client.scheme = 'http'
+        client.hostname = 'example.com'
+        client.port = '80'
         client.timeout = 0
+
         return client

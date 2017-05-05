@@ -38,11 +38,10 @@ setup(
 
     tests_require = ['mock'],
     test_suite = 'tests',
-
     author = 'Iskandarov Eduard',
     author_email = 'e.iskandarov@corp.mail.ru',
     license = 'BSD',
-    url = 'https://github.com/toidi/hadoop-yarn-api-python-client',
+    url = 'https://github.com/lresende/yarn-client',
     classifiers = [
         'Development Status :: 4 - Beta',
         'Intended Audience :: Developers',
@@ -52,6 +51,7 @@ setup(
         'Programming Language :: Python :: 2.7',
         'Programming Language :: Python :: 3.4',
         'Programming Language :: Python :: 3.5',
+        'Programming Language :: Python :: 3.6',
         'Topic :: System :: Distributed Computing',
     ],
 )

@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 from __future__ import unicode_literals
+from .uri import Uri
 from .base import BaseYarnAPI
 from .constants import YarnApplicationState, FinalApplicationStatus
 from .errors import IllegalArgumentError
@@ -16,16 +17,28 @@ class ResourceManager(BaseYarnAPI):
     If `address` argument is `None` client will try to extract `address` and
     `port` from Hadoop configuration files.
 
-    :param str address: ResourceManager HTTP address
-    :param int port: ResourceManager HTTP port
+    :param str serviceEndpoint: ResourceManager HTTP address URI following the 
+        format : http(s)://hostname:port/path. Default Resource Manager port is 8088
+        and default API path is /ws/v1/cluster
+    :param str username: ResourceManager username
+    :param str password: ResourceManager password
     :param int timeout: API connection timeout in seconds
     """
-    def __init__(self, address=None, port=8088, api_endpoint='/ws/v1', username=None, password=None, timeout=30):
-        self.address, self.port, self.api_endpoint, self.username, self.password, self.timeout = address, port, api_endpoint, username, password, timeout
-        if address is None:
+    def __init__(self, serviceEndpoint=None, username=None, password=None, timeout=30):
+        self.timeout = timeout
+        if serviceEndpoint is None:
             self.logger.debug('Get configuration from hadoop conf dir')
             address, port = get_resource_manager_host_port()
-            self.address, self.port = address, port
+            self.hostname, self.port = address, port
+            self.apiEndpoint = '/ws/v1/cluster'
+        else:
+            serviceUri = Uri(serviceEndpoint)
+            self.scheme = serviceUri.scheme or 'https'
+            self.hostname = serviceUri.hostname
+            self.port = serviceUri.port or '8088'
+            self.apiEndpoint = serviceUri.path or '/ws/v1/cluster'
+            self.username = username
+            self.password = password
 
     def cluster_information(self):
         """
@@ -35,7 +48,7 @@ class ResourceManager(BaseYarnAPI):
         :returns: API response object with JSON data
         :rtype: :py:class:`yarn_api_client.base.Response`
         """
-        path = self.api_endpoint + '/cluster/info'
+        path = self.apiEndpoint + '/info'
         return self.request(path)
 
     def cluster_metrics(self):
@@ -47,7 +60,7 @@ class ResourceManager(BaseYarnAPI):
         :returns: API response object with JSON data
         :rtype: :py:class:`yarn_api_client.base.Response`
         """
-        path = self.api_endpoint + '/cluster/metrics'
+        path = self.apiEndpoint + '/metrics'
         return self.request(path)
 
     def cluster_scheduler(self):
@@ -61,7 +74,7 @@ class ResourceManager(BaseYarnAPI):
         :returns: API response object with JSON data
         :rtype: :py:class:`yarn_api_client.base.Response`
         """
-        path = self.api_endpoint + '/cluster/scheduler'
+        path = self.apiEndpoint + '/scheduler'
         return self.request(path)
 
     def cluster_applications(self, state=None, final_status=None,
@@ -91,7 +104,7 @@ class ResourceManager(BaseYarnAPI):
         :raises yarn_api_client.errors.IllegalArgumentError: if `state` or
             `final_status` incorrect
         """
-        path = self.api_endpoint + '/cluster/apps'
+        path = self.apiEndpoint + '/apps'
 
         legal_states = set([s for s, _ in YarnApplicationState])
         if state is not None and state not in legal_states:
@@ -141,7 +154,7 @@ class ResourceManager(BaseYarnAPI):
         :returns: API response object with JSON data
         :rtype: :py:class:`yarn_api_client.base.Response`
         """
-        path = self.api_endpoint + '/cluster/appstatistics'
+        path = self.apiEndpoint + '/appstatistics'
 
         # TODO: validate state argument
         states = ','.join(state_list) if state_list is not None else None
@@ -166,7 +179,7 @@ class ResourceManager(BaseYarnAPI):
         :returns: API response object with JSON data
         :rtype: :py:class:`yarn_api_client.base.Response`
         """
-        path = self.api_endpoint + '/cluster/apps/{appid}'.format(appid=application_id)
+        path = self.apiEndpoint + '/apps/{appid}'.format(appid=application_id)
 
         return self.request(path)
 
@@ -179,7 +192,7 @@ class ResourceManager(BaseYarnAPI):
         :returns: API response object with JSON data
         :rtype: :py:class:`yarn_api_client.base.Response`
         """
-        path = self.api_endpoint + '/cluster/apps/{appid}/appattempts'.format(
+        path = self.apiEndpoint + '/apps/{appid}/appattempts'.format(
             appid=application_id)
 
         return self.request(path)
@@ -194,7 +207,7 @@ class ResourceManager(BaseYarnAPI):
         :raises yarn_api_client.errors.IllegalArgumentError: if `healthy`
             incorrect
         """
-        path = self.api_endpoint + '/cluster/nodes'
+        path = self.apiEndpoint + '/nodes'
         # TODO: validate state argument
 
         legal_healthy = ['true', 'false']
@@ -218,30 +231,6 @@ class ResourceManager(BaseYarnAPI):
         :returns: API response object with JSON data
         :rtype: :py:class:`yarn_api_client.base.Response`
         """
-        path = self.api_endpoint + '/cluster/nodes/{nodeid}'.format(nodeid=node_id)
+        path = self.apiEndpoint + '/nodes/{nodeid}'.format(nodeid=node_id)
 
         return self.request(path)
-
-    def cluster_new_application(self):
-        """
-        Get a new app info, i.e application-id, maximum-resource-capability (memory, vCores).
-
-        :returns: API response object with JSON data
-        :rtype: :py:class:`yarn_api_client.base.Response`
-        """
-        path = self.api_endpoint + "/cluster/apps/new-application"
-        headers={"Content-Type": "application/json"}
-        return self.request(api_path=path, action='POST', headers=headers)
-
-    def submit_new_app(self, json_parameter):
-        """
-        Submit a new app with json data as parameter.
-
-        :param str application-id: The id of the new application to be submitted.
-        :param dict json_parameter: the JSON object with parameters for the application.
-        :returns: API response object, without JSON data as no value returned.
-        :rtype: :py:class:`yarn_api_client.base.Response`
-        """
-        path = self.api_endpoint + "/cluster/apps"
-        headers={"Content-Type": "application/json"}
-        return self.request(api_path=path, action='POST', body=json_parameter, headers=headers)

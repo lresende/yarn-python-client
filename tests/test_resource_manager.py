@@ -9,7 +9,7 @@ from yarn_api_client.errors import IllegalArgumentError
 @patch('yarn_api_client.resource_manager.ResourceManager.request')
 class ResourceManagerTestCase(TestCase):
     def setUp(self):
-        self.rm = ResourceManager('localhost')
+        self.rm = ResourceManager('http://localhost')
 
     @patch('yarn_api_client.resource_manager.get_resource_manager_host_port')
     def test__init__(self, get_config_mock, request_mock):

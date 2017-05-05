@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+from .uri import Uri
 from .base import BaseYarnAPI
 from .constants import ApplicationState
 from .errors import IllegalArgumentError
@@ -9,12 +10,23 @@ class NodeManager(BaseYarnAPI):
     The NodeManager REST API's allow the user to get status on the node and
     information about applications and containers running on that node.
 
-    :param str address: NodeManager HTTP address
-    :param int port: NodeManager HTTP port
+
+    :param str serviceEndpoint: ResourceManager HTTP address URI following the 
+        format : http(s)://hostname:port/path. Default Resource Manager port is 8042
+        and default API path is /ws/v1/node
+    :param str username: ResourceManager username
+    :param str password: ResourceManager password
     :param int timeout: API connection timeout in seconds
     """
-    def __init__(self, address=None, port=8042, timeout=30):
-        self.address, self.port, self.timeout = address, port, timeout
+    def __init__(self, serviceEndpoint=None, username=None, password=None, timeout=30):
+        serviceUri = Uri(serviceEndpoint)
+        self.scheme = serviceUri.scheme or 'https'
+        self.hostname = serviceUri.hostname
+        self.port = serviceUri.port or '8042'
+        self.apiEndpoint = serviceUri.path or '/ws/v1/node'
+        self.username = username
+        self.password = password
+        self.timeout = timeout
 
     def node_information(self):
         """
@@ -24,7 +36,7 @@ class NodeManager(BaseYarnAPI):
         :returns: API response object with JSON data
         :rtype: :py:class:`yarn_api_client.base.Response`
         """
-        path = '/ws/v1/node/info'
+        path = self.apiEndpoint + '/info'
         return self.request(path)
 
     def node_applications(self, state=None, user=None):
@@ -39,7 +51,7 @@ class NodeManager(BaseYarnAPI):
         :raises yarn_api_client.errors.IllegalArgumentError: if `state`
             incorrect
         """
-        path = '/ws/v1/node/apps'
+        path = self.apiEndpoint + '/apps'
 
         legal_states = set([s for s, _ in ApplicationState])
         if state is not None and state not in legal_states:
@@ -63,7 +75,7 @@ class NodeManager(BaseYarnAPI):
         :returns: API response object with JSON data
         :rtype: :py:class:`yarn_api_client.base.Response`
         """
-        path = '/ws/v1/node/apps/{appid}'.format(appid=application_id)
+        path = self.apiEndpoint + '/apps/{appid}'.format(appid=application_id)
 
         return self.request(path)
 
@@ -75,7 +87,7 @@ class NodeManager(BaseYarnAPI):
         :returns: API response object with JSON data
         :rtype: :py:class:`yarn_api_client.base.Response`
         """
-        path = '/ws/v1/node/containers'
+        path = self.apiEndpoint + '/containers'
 
         return self.request(path)
 
@@ -88,7 +100,7 @@ class NodeManager(BaseYarnAPI):
         :returns: API response object with JSON data
         :rtype: :py:class:`yarn_api_client.base.Response`
         """
-        path = '/ws/v1/node/containers/{containerid}'.format(
+        path = self.apiEndpoint + '/containers/{containerid}'.format(
             containerid=container_id)
 
         return self.request(path)

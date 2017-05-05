@@ -9,7 +9,7 @@ from yarn_api_client.errors import IllegalArgumentError
 @patch('yarn_api_client.node_manager.NodeManager.request')
 class NodeManagerTestCase(TestCase):
     def setUp(self):
-        self.nm = NodeManager('localhost')
+        self.nm = NodeManager('http://localhost')
 
     def test_node_information(self, request_mock):
         self.nm.node_information()
